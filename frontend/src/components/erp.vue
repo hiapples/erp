@@ -246,7 +246,6 @@ const startEditRecord = (id) => startEdit(id)
 
 .page-content {
   padding: 20px;
-  background-color: #eee;
   min-height: 200px;
   text-align: center;
   font-size: 1.2rem;

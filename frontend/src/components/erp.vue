@@ -1,11 +1,12 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 const currentPage = ref('one')
 const currentPage2 = ref('one-1')
 const selectedDate = ref('')
 const recordList = ref([])
 const editingId = ref(null)
+const selectedDate2 = ref('')
 
 // 初始就有 5 列可輸入
 const rows = ref([
@@ -53,45 +54,57 @@ const submitAll = async () => {
 }
 
 
-const deleteRow = (index) => {
-  if (rows.value.length <= 1) {
-    alert("⚠️ 至少要保留一列，無法刪除最後一列。")
-    return
-  }
-  rows.value.splice(index, 1)
-}
-onMounted(async () => {
-  try {
-    const res = await axios.get('http://localhost:3000/api/records')
-    recordList.value = res.data
-  } catch (err) {
-    alert('❌ 無法取得入庫紀錄：' + err.message)
-  }
-})
-const startEdit = (id) => {
-  editingId.value = id
-}
+
+
+
 const fetchRecords = async () => {
   try {
-    const res = await axios.get('http://localhost:3000/api/records')
+    const url = selectedDate2.value 
+      ? `http://localhost:3000/api/records/date/${selectedDate2.value}` 
+      : `http://localhost:3000/api/records`
+
+    const res = await axios.get(url)
     recordList.value = res.data
   } catch (err) {
     alert('❌ 無法取得資料：' + err.message)
   }
 }
+
+
+
+
+
 const confirmEdit = async () => {
   const editingRecord = recordList.value.find(r => r._id === editingId.value)
   try {
     await axios.put(`http://localhost:3000/api/records/${editingId.value}`, editingRecord)
     editingId.value = null
     await fetchRecords() // 送出後重新載入
-    alert('✅ 更新成功')
   } catch (err) {
     alert('❌ 更新失敗：' + err.message)
   }
 }
-const startEditRecord = (id) => startEdit(id)
+const startEditRecord = (id) => {
+  editingId.value = id
+}
 
+const deleteRecord = async (id) => {
+  if (confirm('❌ 確定要刪除這筆資料嗎？')) {
+    try {
+      await axios.delete(`http://localhost:3000/api/records/${id}`)
+      await fetchRecords() // 刪完重新讀取
+    } catch (err) {
+      alert('❌ 刪除失敗：' + err.message)
+    }
+  }
+}
+// 一開始載入全部
+onMounted(fetchRecords)
+
+// 當 selectedDate2 改變就重新抓資料
+watch(selectedDate2, () => {
+  fetchRecords()
+})
 </script>
 
 <template>
@@ -116,7 +129,6 @@ const startEditRecord = (id) => startEdit(id)
           <table>
             <thead>
               <tr>
-                <th></th>
                 <th>品項</th>
                 <th>數量</th>
                 <th>價格</th>
@@ -125,11 +137,6 @@ const startEditRecord = (id) => startEdit(id)
             </thead>
             <tbody>
               <tr v-for="(row, index) in rows" :key="index">
-                <!-- 刪除按鈕欄 -->
-                <td class="button">
-                  <button class="delete-btn" @click="deleteRow(index)">❌</button>
-                </td>
-                <!-- 其他欄位 -->
                 <td class="items">
                   <select v-model="row.item">
                     <option  v-for="option in itemOptions" :key="option" :value="option">{{ option }}</option>
@@ -143,7 +150,6 @@ const startEditRecord = (id) => startEdit(id)
           </table>
 
           <div class="d-flex  justify-content-end">
-            <button class="btn text-center" @click="rows.push({ item: '', quantity: '', price: '', note: '' })">新增列</button>
             <button class="btn text-center ms-2" @click="submitAll">送出全部</button>
           </div>
         </div>
@@ -163,14 +169,18 @@ const startEditRecord = (id) => startEdit(id)
                 <th>數量</th>
                 <th>價格</th>
                 <th>備註</th>
-                <th>日期</th>
+                <th v-if="!editingId">日期</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="record in recordList" :key="record._id">
                 <td class="button">
-                  <button class="update-btn" v-if="editingId === record._id" @click="confirmEdit">✅</button>
-                  <button class="update-btn" v-else @click="startEditRecord(record._id)">🔄️</button>
+                  <template v-if="editingId === record._id">
+                    <button class="delete-btn"  @click="deleteRecord(record._id)">刪</button>
+                  </template>
+                  <template v-else>
+                    <button class="update-btn" @click="startEditRecord(record._id)">改</button>
+                  </template>
                 </td>
                 <td class="items">
                   <template v-if="editingId === record._id">
@@ -182,7 +192,6 @@ const startEditRecord = (id) => startEdit(id)
                     {{ record.item }}
                   </template>
                 </td>
-
                 <td class="qty">
                   <template v-if="editingId === record._id">
                     <input type="number" v-model.number="record.quantity" min="1" />
@@ -191,7 +200,6 @@ const startEditRecord = (id) => startEdit(id)
                     {{ record.quantity }}
                   </template>
                 </td>
-
                 <td class="price">
                   <template v-if="editingId === record._id">
                     <input type="number" v-model.number="record.price" min="0" />
@@ -200,7 +208,6 @@ const startEditRecord = (id) => startEdit(id)
                     {{ record.price }}
                   </template>
                 </td>
-
                 <td class="note">
                   <template v-if="editingId === record._id">
                     <input v-model="record.note" />
@@ -209,16 +216,16 @@ const startEditRecord = (id) => startEdit(id)
                     {{ record.note }}
                   </template>
                 </td>
-
-                <td class="date">
-                  <template v-if="editingId === record._id">
-                    <input type="date" v-model="record.date" />
-                  </template>
-                  <template v-else>
-                    {{ record.date }}
-                  </template>
+                <td >
+                  <div style="display: flex; align-items: center; gap: 6px;justify-content: center;">
+                    <template v-if="editingId === record._id">
+                      <button class="update-btn" style="padding: 6px 10px;" @click="confirmEdit">確認</button>
+                    </template>
+                    <template v-else>
+                        {{ record.date }}
+                    </template>
+                  </div>
                 </td>
-
               </tr>
             </tbody>
           </table>
@@ -302,25 +309,23 @@ input {
 
 
 .delete-btn {
-  background: transparent;
   border: none;
-  color: red;
-  font-size: 10px;
+  font-size: 8px;
   cursor: pointer;
-  transition: transform 0.1s ease;
+  border-radius: 15px;
+  background-color: #8d0205;
+  color:#ffffff;
+  padding: 6px;
 }
-.delete-btn:hover {
-  transform: scale(1.2);
-}
+
 .update-btn{
-  background: transparent;
   border: none;
-  font-size: 15px;
+  font-size: 8px;
   cursor: pointer;
-  transition: transform 0.1s ease;
-}
-.update-btn:hover {
-  transform: scale(1.2);
+  border-radius: 15px;
+  background-color: #1d35d0;
+  color:#ffffff;
+  padding: 6px;
 }
 select {
   width: 100%;
@@ -334,17 +339,7 @@ td input {
   min-height: 30px;
 }
 
-/* 移除上下箭頭 */
-.price::-webkit-outer-spin-button,
-.price::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.qty::-webkit-outer-spin-button,
-.qty::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+
 .items{
   min-width: 80px;
 }
@@ -360,11 +355,18 @@ td input {
   min-width: 50px;
 }
 
+
 .button{
   max-width: 20px;
   padding-left: 0px!important;
   padding-right: 25px!important;
 }
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 
 
 </style>

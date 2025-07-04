@@ -23,7 +23,7 @@ const rows = ref([
   { item: '', quantity: '', price: '', note: '' },
   { item: '', quantity: '', price: '', note: '' }
 ])
-const itemOptions = ['滑鼠滑鼠滑鼠', '滑鼠滑鼠滑', '螢幕', '鍵盤', '耳機']
+const itemOptions = ['雞蛋', '砂糖', '低筋麵粉', '牛奶', '水',"泡打粉","奶油"]
 
 // 最後送出全部列
 const submitAll = async () => {
@@ -257,14 +257,14 @@ watch(currentPage, (newPage) => {
         <div class="d-flex justify-content-center align-items-center " >
           <button style="min-width: 330px;" class="btn mb-3" :class="{ active: currentPage2 === 'two-2' }"@click="() => { currentPage2 = 'two-2'; fetchRecords() }">入庫總覽</button>
         </div>
-        <div class="d-flex justify-content-center mt-3">
-          <div class="d-flex align-items-center gap-3" style="width: 100%; max-width: 330px;">
-            <div style="font-size:14px; white-space: nowrap;">日期&ensp;:</div>
-            <input type="date"v-model="selectedDate"class="form-control"style="min-height: 42px;  min-width: 0; flex: 1;"/>
-          </div>
-        </div>
-
         <div class="form-wrapper">
+          <h5 class="title">商品入庫</h5>
+          <div class="d-flex justify-content-center mt-3">
+            <div class="d-flex align-items-center gap-3 mb-3" style="width: 100%; max-width: 330px;">
+              <div style="font-size:14px; white-space: nowrap;">日期&ensp;:</div>
+              <input type="date"v-model="selectedDate"class="form-control"style="min-height: 42px;  min-width: 0; flex: 1;"/>
+            </div>
+          </div>
           <table>
             <thead>
               <tr>
@@ -287,7 +287,6 @@ watch(currentPage, (newPage) => {
               </tr>
             </tbody>
           </table>
-
           <div class="d-flex  justify-content-end">
             <button class="btn text-center ms-2" @click="submitAll">送出全部</button>
           </div>
@@ -297,33 +296,23 @@ watch(currentPage, (newPage) => {
         <div class="d-flex justify-content-center align-items-center " >
           <button style="min-width: 330px;" class="btn mb-3" :class="{ active: currentPage2 === 'one-1' }"@click="currentPage2 = 'one-1'">新增入庫</button>
         </div>
-          <!-- 日期欄 -->
-        <div class="d-flex justify-content-center mt-3">
-          <div class="d-flex align-items-center gap-3" style="width: 100%; max-width: 330px;">
-            <div style="font-size:14px; white-space: nowrap;">日期&ensp;:</div>
-            <input
-              type="date"
-              v-model="selectedDate2"
-              class="form-control"
-              style="min-height: 42px;  min-width: 0; flex: 1;"
-            />
-          </div>
-        </div>
-
-        <!-- 品項欄 -->
-        <div class="d-flex justify-content-center mt-3">
-          <div class="d-flex align-items-center gap-3" style="width: 100%; max-width: 330px;">
-            <div style="font-size:14px; white-space: nowrap;">品項&ensp;:</div>
-            <select
-              v-model="selectedItem"
-              style="min-height: 42px; font-size: 14px; min-width: 0; flex: 1;"
-            >
-              <option value=""></option>
-              <option v-for="option in itemOptions" :key="option" :value="option">{{ option }}</option>
-            </select>
-          </div>
-        </div>
         <div class="form-wrapper">
+          <h5 class="title">總覽查詢</h5>
+          <div class="d-flex justify-content-center mt-3">
+            <div class="d-flex align-items-center gap-3 " style="width: 100%; max-width: 330px;">
+              <div style="font-size:14px; white-space: nowrap;">日期&ensp;:</div>
+              <input type="date"v-model="selectedDate2"class="form-control"style="min-height: 42px;  min-width: 0; flex: 1;"/>
+            </div>
+          </div>
+          <div class="d-flex justify-content-center mt-3 mb-3">
+            <div class="d-flex align-items-center gap-3" style="width: 100%; max-width: 330px;">
+              <div style="font-size:14px; white-space: nowrap;">品項&ensp;:</div>
+              <select v-model="selectedItem"style="min-height: 42px; font-size: 14px; min-width: 0; flex: 1;">
+                <option value=""></option>
+                <option v-for="option in itemOptions" :key="option" :value="option">{{ option }}</option>
+              </select>
+            </div>
+          </div>
           <table>
             <thead>
               <tr>
@@ -398,8 +387,8 @@ watch(currentPage, (newPage) => {
     <!-- 庫存 -->
     <div v-else-if="currentPage === 'two'">
       <div class="form-wrapper">
-        <h5 style="margin-bottom: 1rem;">庫存總覽</h5>
-        <div v-if="Object.keys(itemSummary).length > 0">
+        <h5 class="title">庫存總覽</h5>
+        <div v-if="Object.keys(itemSummary).length > 0" style="font-size: 14px;">
           <ul class="list-group">
             <li
               class="list-group-item d-flex justify-content-between align-items-center"
@@ -420,14 +409,14 @@ watch(currentPage, (newPage) => {
         <div class="d-flex justify-content-center align-items-center " >
           <button style="min-width: 330px;" class="btn mb-3" :class="{ active: currentPage3 === 'two-2' }"@click="() => { currentPage3 = 'two-2'; fetchRecords2() }">出庫總覽</button>
         </div>
-        <div class="d-flex justify-content-center mt-3">
-          <div class="d-flex align-items-center gap-3" style="width: 100%; max-width: 330px;">
-            <div style="font-size:14px; white-space: nowrap;">日期&ensp;:</div>
-            <input type="date"v-model="selectedDate3"class="form-control"style="min-height: 42px;  min-width: 0; flex: 1;"/>
-          </div>
-        </div>
-
         <div class="form-wrapper">
+          <h5 class="title">商品出庫</h5>
+          <div class="d-flex justify-content-center mt-3">
+            <div class="d-flex align-items-center gap-3 mb-3" style="width: 100%; max-width: 330px;">
+              <div style="font-size:14px; white-space: nowrap;">日期&ensp;:</div>
+              <input type="date"v-model="selectedDate3"class="form-control"style="min-height: 42px;  min-width: 0; flex: 1;"/>
+            </div>
+          </div>
           <table>
             <thead>
               <tr>
@@ -450,7 +439,6 @@ watch(currentPage, (newPage) => {
               </tr>
             </tbody>
           </table>
-
           <div class="d-flex  justify-content-end">
             <button class="btn text-center ms-2" @click="submitAll2">送出全部</button>
           </div>
@@ -460,33 +448,23 @@ watch(currentPage, (newPage) => {
         <div class="d-flex justify-content-center align-items-center " >
           <button style="min-width: 330px;" class="btn mb-3" :class="{ active: currentPage3 === 'one-1' }"@click="currentPage3 = 'one-1'">新增出庫</button>
         </div>
-          <!-- 日期欄 -->
-        <div class="d-flex justify-content-center mt-3">
-          <div class="d-flex align-items-center gap-3" style="width: 100%; max-width: 330px;">
-            <div style="font-size:14px; white-space: nowrap;">日期&ensp;:</div>
-            <input
-              type="date"
-              v-model="selectedDate4"
-              class="form-control"
-              style="min-height: 42px;  min-width: 0; flex: 1;"
-            />
-          </div>
-        </div>
-
-        <!-- 品項欄 -->
-        <div class="d-flex justify-content-center mt-3">
-          <div class="d-flex align-items-center gap-3" style="width: 100%; max-width: 330px;">
-            <div style="font-size:14px; white-space: nowrap;">品項&ensp;:</div>
-            <select
-              v-model="selectedItem2"
-              style="min-height: 42px; font-size: 14px; min-width: 0; flex: 1;"
-            >
-              <option value=""></option>
-              <option v-for="option in itemOptions" :key="option" :value="option">{{ option }}</option>
-            </select>
-          </div>
-        </div>
         <div class="form-wrapper">
+          <h5 class="title">總覽查詢</h5>
+          <div class="d-flex justify-content-center mt-3">
+            <div class="d-flex align-items-center gap-3" style="width: 100%; max-width: 330px;">
+              <div style="font-size:14px; white-space: nowrap;">日期&ensp;:</div>
+              <input type="date" v-model="selectedDate4" class="form-control" style="min-height: 42px;  min-width: 0; flex: 1;"/>
+            </div>
+          </div>
+          <div class="d-flex justify-content-center mt-3">
+            <div class="d-flex align-items-center gap-3 mb-3" style="width: 100%; max-width: 330px;">
+              <div style="font-size:14px; white-space: nowrap;">品項&ensp;:</div>
+              <select v-model="selectedItem2"style="min-height: 42px; font-size: 14px; min-width: 0; flex: 1;">
+                <option value=""></option>
+                <option v-for="option in itemOptions" :key="option" :value="option">{{ option }}</option>
+              </select>
+            </div>
+          </div>
           <table>
             <thead>
               <tr>
@@ -692,6 +670,9 @@ input[type=number]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
+.title{
+  color: #ff0000;
+  margin-bottom: 1rem;
+}
 
 </style>

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import inventory from '../models/record.js'  // 你的 MongoDB Mongoose model
+import Outmodel from '../models/out.js'  // 你的 MongoDB Mongoose model
 
 const router = Router()
 
@@ -7,7 +7,7 @@ const router = Router()
 router.post('/', async (req, res) => {
   try {
     const data = req.body
-    const result = await inventory.insertMany(data)
+    const result = await Outmodel.insertMany(data)
     res.json({ success: true, inserted: result.length })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
@@ -17,26 +17,25 @@ router.post('/', async (req, res) => {
 // 取得所有資料（可選日期查詢）
 router.get('/', async (req, res) => {
   try {
-    const { date } = req.query
-    let records
+    const { date, item } = req.query
+    const query = {}
 
-    if (date) {
-      records = await inventory.find({ date }).sort({ date: -1 })
-    } else {
-      records = await inventory.find().sort({ date: -1 })
-    }
+    if (date) query.date = date
+    if (item) query.item = item
 
+    const records = await Outmodel.find(query).sort({ date: -1 })
     res.json(records)
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }
 })
 
+
 // 根據日期取得資料（用 URL param）
 router.get('/date/:date', async (req, res) => {
   try {
     const { date } = req.params
-    const records = await inventory.find({ date }).sort({ date: -1 })
+    const records = await Outmodel.find({ date }).sort({ date: -1 })
     res.json(records)
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
@@ -48,7 +47,7 @@ router.post('/search', async (req, res) => {
   try {
     const { date } = req.body
     const query = date ? { date } : {}
-    const records = await inventory.find(query).sort({ date: -1 })
+    const records = await Outmodel.find(query).sort({ date: -1 })
     res.json(records)
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
@@ -58,7 +57,7 @@ router.post('/search', async (req, res) => {
 // 更新指定 id 的資料
 router.put('/:id', async (req, res) => {
   try {
-    const updated = await inventory.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    const updated = await Outmodel.findByIdAndUpdate(req.params.id, req.body, { new: true })
     res.json({ success: true, updated })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
@@ -68,7 +67,7 @@ router.put('/:id', async (req, res) => {
 // 刪除指定 id 的資料
 router.delete('/:id', async (req, res) => {
   try {
-    await inventory.findByIdAndDelete(req.params.id)
+    await Outmodel.findByIdAndDelete(req.params.id)
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })

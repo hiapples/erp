@@ -246,7 +246,12 @@ function updatePrice(row) {
 }
 
 
-
+function clearRow(index) {
+  rows.value[index] = { item: '', quantity: '', price: '', note: '' }
+}
+function clearRow2(index) {
+  rows2.value[index] = { item: '', quantity: '', price: '', note: '' }
+}
 
 onMounted(() => {
   if (currentPage.value === 'two') fetchRecords3()
@@ -275,11 +280,12 @@ watch(currentPage, (newPage) => {
 <template>
   <!-- 上方選單 -->
   <div class="d-flex justify-content-around">
-    <div class="item p-3 text-center":class="{ active: currentPage === 'one' }"@click="currentPage = 'one'">入庫</div>
-    <div class="item p-3 text-center":class="{ active: currentPage === 'two' }"@click="currentPage = 'two'">庫存</div>
-    <div class="item p-3 text-center":class="{ active: currentPage === 'three' }"@click="currentPage = 'three'">出庫</div>
-    <div class="item p-3 text-center":class="{ active: currentPage === 'four' }"@click="currentPage = 'four'">報表</div>
+    <div class="item p-3 text-center" :class="{ active: currentPage === 'one' }" @click="() => { currentPage = 'one'; currentPage2 = 'one-1' }">入庫</div>
+    <div class="item p-3 text-center" :class="{ active: currentPage === 'two' }" @click="() => { currentPage = 'two' }">庫存</div>
+    <div class="item p-3 text-center" :class="{ active: currentPage === 'three' }" @click="() => { currentPage = 'three'; currentPage3 = 'one-1' }">出庫</div>
+    <div class="item p-3 text-center" :class="{ active: currentPage === 'four' }" @click="() => { currentPage = 'four' }">報表</div>
   </div>
+
 
   <!-- 內容區塊 -->
   <div class="page-content mt-4">
@@ -300,6 +306,7 @@ watch(currentPage, (newPage) => {
           <table>
             <thead>
               <tr>
+                <th></th>
                 <th>品項</th>
                 <th>數量</th>
                 <th>價格</th>
@@ -308,14 +315,17 @@ watch(currentPage, (newPage) => {
             </thead>
             <tbody>
               <tr v-for="(row, index) in rows" :key="index">
+                <td>
+                  <div class="clear"@click="clearRow(index)" type="button">空</div>
+                </td>
                 <td class="items">
                   <select v-model="row.item" >
-                    <option  v-for="option in itemOptions" :key="option" :value="option">{{ option }}</option>
+                    <option v-for="option in itemOptions" :key="option" :value="option">{{ option }}</option>
                   </select>
                 </td>
                 <td><input type="number" class="qty" v-model.number="row.quantity" min="1" /></td>
                 <td><input type="number" class="price" v-model.number="row.price" min="0" /></td>
-                <td><input  class="note"v-model="row.note" /></td>
+                <td><input class="note" v-model="row.note" /></td>
               </tr>
             </tbody>
           </table>
@@ -460,6 +470,7 @@ watch(currentPage, (newPage) => {
           <table>
             <thead>
               <tr>
+                <th></th>
                 <th>品項</th>
                 <th>數量</th>
                 <th>價格</th>
@@ -468,14 +479,17 @@ watch(currentPage, (newPage) => {
             </thead>
             <tbody>
               <tr v-for="(row, index) in rows2" :key="index">
+                <td>
+                  <div type="button" class="clear" @click="clearRow2(index)">空</div>
+                </td>
                 <td class="items">
                   <select v-model="row.item" @change="updatePrice(row)">
-                    <option  v-for="option in itemOptions" :key="option" :value="option">{{ option }}</option>
+                    <option v-for="option in itemOptions" :key="option" :value="option">{{ option }}</option>
                   </select>
                 </td>
                 <td><input type="number" class="qty" v-model.number="row.quantity" min="1" /></td>
                 <td><input type="number" class="price" v-model.number="row.price" min="0" /></td>
-                <td><input  class="note"v-model="row.note" /></td>
+                <td><input class="note" v-model="row.note" /></td>
               </tr>
             </tbody>
           </table>
@@ -714,5 +728,13 @@ input[type=number]::-webkit-inner-spin-button {
   color: #ff0000;
   margin-bottom: 1rem;
 }
-
+.clear{
+  border: none;
+  font-size: 8px;
+  cursor: pointer;
+  border-radius: 15px;
+  background-color: #1d35d0;
+  color:#ffffff;
+  padding: 6px;
+}
 </style>

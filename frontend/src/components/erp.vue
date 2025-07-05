@@ -14,6 +14,8 @@ const recordList2 = ref([])
 const editingId = ref(null)
 const selectedItem = ref('')
 const selectedItem2 = ref('')
+const itemOptions = ['雞蛋', '砂糖', '低筋麵粉', '牛奶', '水',"泡打粉","奶油"]
+
 
 
 // 初始就有 5 列可輸入
@@ -24,7 +26,13 @@ const rows = ref([
   { item: '', quantity: '', price: '', note: '' },
   { item: '', quantity: '', price: '', note: '' }
 ])
-const itemOptions = ['雞蛋', '砂糖', '低筋麵粉', '牛奶', '水',"泡打粉","奶油"]
+const rows2 = ref([
+  { item: '', quantity: '', price: '', note: '' },
+  { item: '', quantity: '', price: '', note: '' },
+  { item: '', quantity: '', price: '', note: '' },
+  { item: '', quantity: '', price: '', note: '' },
+  { item: '', quantity: '', price: '', note: '' }
+])
 
 // 最後送出全部列
 const submitAll = async () => {
@@ -66,7 +74,7 @@ const submitAll2 = async () => {
     return
   }
 
-  const validRows = rows.value.filter(row =>
+  const validRows = rows2.value.filter(row =>
     row.item && row.quantity !== '' && row.price !== '' && row.note !== ''
   )
 
@@ -83,7 +91,7 @@ const submitAll2 = async () => {
 
     const res = await axios.post('http://localhost:3000/api/outrecords', dataWithDate)
     alert(`✅ 共送出 ${res.data.inserted} 筆資料`)
-    rows.value = Array.from({ length: 5 }, () => ({ item: '', quantity: '', price: '', note: '' }))
+    rows2.value = Array.from({ length: 5 }, () => ({ item: '', quantity: '', price: '', note: '' }))
   } catch (err) {
     alert('❌ 發送失敗：' + err.message)
   }
@@ -202,32 +210,27 @@ const itemSummary = computed(() => {
   const summary = []
 
   for (const item of itemOptions) {
-    // 入庫記錄
     const inRecords = recordList.value.filter(r => r.item === item)
     const inQty = inRecords.reduce((sum, r) => sum + Number(r.quantity), 0)
     const inTotalPrice = inRecords.reduce((sum, r) => sum + Number(r.quantity) * Number(r.price), 0)
 
-    // 出庫記錄
     const outQty = recordList2.value
       .filter(r => r.item === item)
       .reduce((sum, r) => sum + Number(r.quantity), 0)
 
-    // 庫存量
     const stockQty = inQty - outQty
 
-    // 平均單價 (入庫平均)
     let avgPrice = 0
     if (inQty > 0 && stockQty > 0) {
-      avgPrice = Math.round(inTotalPrice / inQty)
+      avgPrice = Number((inTotalPrice / inQty).toFixed(2))
     }
 
-    // 庫存總價
-    const stockTotalPrice = stockQty * avgPrice
+    const stockTotalPrice = Number((stockQty * avgPrice).toFixed(2))
 
     summary.push({
       item,
       quantity: stockQty,
-      avgPrice: stockQty > 0 ? avgPrice : 0,  // 庫存 0 時 單價歸 0
+      avgPrice: stockQty > 0 ? avgPrice : 0,
       totalPrice: stockQty > 0 ? stockTotalPrice : 0
     })
   }
@@ -236,6 +239,11 @@ const itemSummary = computed(() => {
 })
 
 
+// ✅ 逐列更新價格
+function updatePrice(row) {
+  const found = itemSummary.value.find(i => i.item === row.item)
+  row.price = found ? found.avgPrice : 0
+}
 
 
 
@@ -257,6 +265,10 @@ watch(currentPage, (newPage) => {
   else if (newPage === 'three') fetchRecords2()
   else fetchRecords()
 })
+
+
+
+
 
 </script>
 
@@ -422,8 +434,8 @@ watch(currentPage, (newPage) => {
               <tr v-for="(record, index) in itemSummary" :key="index">
                 <td>{{ record.item }}</td>
                 <td>{{ record.quantity }}</td>
-                <td>{{ Math.round(record.avgPrice) }}</td>
-                <td>{{ Math.round(record.totalPrice) }}</td>
+                <td>{{ record.avgPrice.toFixed(2) }}</td>
+                <td>{{ record.totalPrice.toFixed(2) }}</td>
               </tr>
             </tbody>
           </table>
@@ -455,9 +467,9 @@ watch(currentPage, (newPage) => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(row, index) in rows" :key="index">
+              <tr v-for="(row, index) in rows2" :key="index">
                 <td class="items">
-                  <select v-model="row.item" >
+                  <select v-model="row.item" @change="updatePrice(row)">
                     <option  v-for="option in itemOptions" :key="option" :value="option">{{ option }}</option>
                   </select>
                 </td>

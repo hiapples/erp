@@ -4,9 +4,10 @@ import axios from 'axios'
 const currentPage = ref('one')
 const currentPage2 = ref('one-1')
 const currentPage3 = ref('one-1')
-const selectedDate = ref('')
+const today = new Date().toISOString().split('T')[0]
+const selectedDate = ref(today)
 const selectedDate2 = ref('')
-const selectedDate3 = ref('')
+const selectedDate3 = ref(today)
 const selectedDate4 = ref('')
 const recordList = ref([])
 const recordList2 = ref([])
@@ -198,25 +199,44 @@ const deleteRecord2 = async (id) => {
   }
 }
 const itemSummary = computed(() => {
-  const summary = {}
+  const summary = []
 
   for (const item of itemOptions) {
-    // 計算入庫總量（recordList 是入庫資料）
-    const inQty = recordList.value
-      .filter(r => r.item === item)
-      .reduce((sum, r) => sum + Number(r.quantity), 0)
+    // 入庫記錄
+    const inRecords = recordList.value.filter(r => r.item === item)
+    const inQty = inRecords.reduce((sum, r) => sum + Number(r.quantity), 0)
+    const inTotalPrice = inRecords.reduce((sum, r) => sum + Number(r.quantity) * Number(r.price), 0)
 
-    // 計算出庫總量（recordList2 是出庫資料）
+    // 出庫記錄
     const outQty = recordList2.value
       .filter(r => r.item === item)
       .reduce((sum, r) => sum + Number(r.quantity), 0)
 
-    // 庫存 = 入庫 - 出庫
-    summary[item] = inQty - outQty
+    // 庫存量
+    const stockQty = inQty - outQty
+
+    // 平均單價 (入庫平均)
+    let avgPrice = 0
+    if (inQty > 0 && stockQty > 0) {
+      avgPrice = Math.round(inTotalPrice / inQty)
+    }
+
+    // 庫存總價
+    const stockTotalPrice = stockQty * avgPrice
+
+    summary.push({
+      item,
+      quantity: stockQty,
+      avgPrice: stockQty > 0 ? avgPrice : 0,  // 庫存 0 時 單價歸 0
+      totalPrice: stockQty > 0 ? stockTotalPrice : 0
+    })
   }
 
   return summary
 })
+
+
+
 
 
 
@@ -388,17 +408,25 @@ watch(currentPage, (newPage) => {
     <div v-else-if="currentPage === 'two'">
       <div class="form-wrapper">
         <h5 class="title">庫存總覽</h5>
-        <div v-if="Object.keys(itemSummary).length > 0" style="font-size: 14px;">
-          <ul class="list-group">
-            <li
-              class="list-group-item d-flex justify-content-between align-items-center"
-              v-for="(qty, item) in itemSummary"
-              :key="item"
-            >
-              {{ item }}
-              <span class="rounded-pill">{{ qty }}</span>
-            </li>
-          </ul>
+        <div v-if="itemSummary.length > 0" style="font-size: 14px;">
+          <table class="table ">
+            <thead>
+              <tr>
+                <th>品項</th>
+                <th>數量</th>
+                <th>平均單價</th>
+                <th>總價</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(record, index) in itemSummary" :key="index">
+                <td>{{ record.item }}</td>
+                <td>{{ record.quantity }}</td>
+                <td>{{ Math.round(record.avgPrice) }}</td>
+                <td>{{ Math.round(record.totalPrice) }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
         <div v-else>目前無資料</div>
       </div>

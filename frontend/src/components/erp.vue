@@ -383,7 +383,7 @@ watch(currentPage, (newPage) => {
           <button style="min-width: 330px;" class="btn mb-3" :class="{ active: currentPage2 === 'one-1' }"@click="currentPage2 = 'one-1'">新增入庫</button>
         </div>
         <div class="form-wrapper">
-          <h5 class="title">總覽查詢</h5>
+          <h5 class="title">入庫總覽查詢</h5>
           <div class="d-flex justify-content-center mt-3">
             <div class="d-flex align-items-center gap-3 " style="width: 100%; max-width: 330px;">
               <div style="font-size:14px; white-space: nowrap;">日期&ensp;:</div>
@@ -551,7 +551,7 @@ watch(currentPage, (newPage) => {
           <button style="min-width: 330px;" class="btn mb-3" :class="{ active: currentPage3 === 'one-1' }"@click="currentPage3 = 'one-1'">新增出庫</button>
         </div>
         <div class="form-wrapper">
-          <h5 class="title">總覽查詢</h5>
+          <h5 class="title">出庫庫總覽查詢</h5>
           <div class="d-flex justify-content-center mt-3">
             <div class="d-flex align-items-center gap-3" style="width: 100%; max-width: 330px;">
               <div style="font-size:14px; white-space: nowrap;">日期&ensp;:</div>

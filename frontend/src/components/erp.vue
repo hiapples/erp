@@ -34,26 +34,58 @@ const rows2 = ref([
   { item: '', quantity: '', price: '', note: '' }
 ])
 
+function checkOutStock() {
+  const outQtyMap = {}
+
+  for (const row of rows2.value) {
+    if (!row.item || !row.quantity) continue
+    if (!outQtyMap[row.item]) outQtyMap[row.item] = 0
+    outQtyMap[row.item] += Number(row.quantity)
+  }
+
+  for (const item in outQtyMap) {
+    const outQty = outQtyMap[item]
+
+    const inQty = recordList.value
+      .filter(r => r.item === item)
+      .reduce((sum, r) => sum + Number(r.quantity), 0)
+
+    const currentOutQty = recordList2.value
+      .filter(r => r.item === item)
+      .reduce((sum, r) => sum + Number(r.quantity), 0)
+
+    if (outQty + currentOutQty > inQty) {
+      alert(`【${item}】庫存不足，無法出庫 ${outQty}，目前庫存僅剩 ${inQty - currentOutQty}`)
+      return false
+    }
+  }
+
+  return true
+}
+
+const getAvgPrice = (item) => {
+  const found = itemSummary.value.find(i => i.item === item)
+  return found ? found.avgPrice : 0
+}
 // 最後送出全部列
 const submitAll = async () => {
-  // 日期沒填不能送
   if (!selectedDate.value) {
     alert('❌ 請選擇日期')
     return
   }
 
-  // 篩選出「每格都填寫」的有效列
   const validRows = rows.value.filter(row =>
-    row.item && row.quantity !== '' && row.price !== '' && row.note !== ''
+    row.item &&
+    row.quantity !== '' && row.price !== '' &&
+    row.quantity > 0 && row.price > 0
   )
 
   if (validRows.length === 0) {
-    alert('❌ 請至少填寫一列完整資料（品項、數量、價格、備註）')
+    alert('❌ 請至少填寫一列完整資料（品項、數量>0、價格>0）')
     return
   }
 
   try {
-    // 加入日期欄
     const dataWithDate = validRows.map(row => ({
       ...row,
       date: selectedDate.value
@@ -62,12 +94,13 @@ const submitAll = async () => {
     const res = await axios.post('http://localhost:3000/api/records', dataWithDate)
     alert(`✅ 共送出 ${res.data.inserted} 筆資料`)
 
-    // 重設 5 列空白
     rows.value = Array.from({ length: 5 }, () => ({ item: '', quantity: '', price: '', note: '' }))
   } catch (err) {
     alert('❌ 發送失敗：' + err.message)
   }
 }
+
+
 const submitAll2 = async () => {
   if (!selectedDate3.value) {
     alert('❌ 請選擇日期')
@@ -75,27 +108,38 @@ const submitAll2 = async () => {
   }
 
   const validRows = rows2.value.filter(row =>
-    row.item && row.quantity !== '' && row.price !== '' && row.note !== ''
+    row.item &&
+    row.quantity !== '' &&
+    row.quantity > 0 &&
+    getAvgPrice(row.item) > 0   // 用平均價判斷價格有效性
   )
 
   if (validRows.length === 0) {
-    alert('❌ 請至少填寫一列完整資料（品項、數量、價格、備註）')
+    alert('❌ 請至少填寫一列完整資料（品項、數量>0、價格>0）')
     return
+  }
+
+  if (!checkOutStock()) {
+    return  // 檢查沒過，直接擋住
   }
 
   try {
     const dataWithDate = validRows.map(row => ({
       ...row,
-      date: selectedDate3.value
+      date: selectedDate3.value,
+      price: getAvgPrice(row.item)
     }))
 
     const res = await axios.post('http://localhost:3000/api/outrecords', dataWithDate)
     alert(`✅ 共送出 ${res.data.inserted} 筆資料`)
+
     rows2.value = Array.from({ length: 5 }, () => ({ item: '', quantity: '', price: '', note: '' }))
   } catch (err) {
     alert('❌ 發送失敗：' + err.message)
   }
 }
+
+
 
 
 
@@ -178,6 +222,9 @@ const confirmEdit2 = async () => {
   }
 }
 
+
+
+
 const startEditRecord = (id) => {
   editingId.value = id
 }
@@ -239,11 +286,8 @@ const itemSummary = computed(() => {
 })
 
 
-// ✅ 逐列更新價格
-function updatePrice(row) {
-  const found = itemSummary.value.find(i => i.item === row.item)
-  row.price = found ? found.avgPrice : 0
-}
+
+
 
 
 function clearRow(index) {
@@ -473,7 +517,7 @@ watch(currentPage, (newPage) => {
                 <th></th>
                 <th>品項</th>
                 <th>數量</th>
-                <th>價格</th>
+                <th>單價</th>
                 <th>備註</th>
               </tr>
             </thead>
@@ -483,12 +527,16 @@ watch(currentPage, (newPage) => {
                   <div type="button" class="clear" @click="clearRow2(index)">空</div>
                 </td>
                 <td class="items">
-                  <select v-model="row.item" @change="updatePrice(row)">
+                  <select v-model="row.item">
                     <option v-for="option in itemOptions" :key="option" :value="option">{{ option }}</option>
                   </select>
                 </td>
                 <td><input type="number" class="qty" v-model.number="row.quantity" min="1" /></td>
-                <td><input type="number" class="price" v-model.number="row.price" min="0" /></td>
+                <td>
+                  <div class="price-text">
+                    {{ getAvgPrice(row.item) }}
+                  </div>
+                </td>
                 <td><input class="note" v-model="row.note" /></td>
               </tr>
             </tbody>
@@ -708,6 +756,9 @@ td input {
 .price {
   min-width: 45px;
   
+}
+.price-text{
+  min-width: 50px;
 }
 .note {
   min-width: 50px;

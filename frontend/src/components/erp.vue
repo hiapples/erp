@@ -15,7 +15,7 @@ const editingId = ref(null)
 const selectedItem = ref('')
 const selectedItem2 = ref('')
 const itemOptions = ['雞蛋', '砂糖', '低筋麵粉', '牛奶', '水',"泡打粉","奶油"]
-
+const isLoading = ref(false)
 
 
 // 初始就有 5 列可輸入
@@ -185,17 +185,27 @@ const fetchRecords2 = async () => {
 }
 const fetchRecords3 = async () => {
   try {
-    // 先抓入庫資料
-    const inRes = await axios.get('http://localhost:3000/api/records')
-    recordList.value = inRes.data
+    isLoading.value = true
 
-    // 再抓出庫資料
-    const outRes = await axios.get('http://localhost:3000/api/outrecords')
+    const inResPromise = axios.get('http://localhost:3000/api/records')
+    const outResPromise = axios.get('http://localhost:3000/api/outrecords')
+
+    // 同時等待兩個請求
+    const [inRes, outRes] = await Promise.all([inResPromise, outResPromise])
+
+    recordList.value = inRes.data
     recordList2.value = outRes.data
+
+    // 用 Promise 包裝 setTimeout，等待至少1秒
+    await new Promise(resolve => setTimeout(resolve, 500))
+
   } catch (err) {
     alert('❌ 取得庫存資料失敗：' + err.message)
+  } finally {
+    isLoading.value = false
   }
 }
+
 
 
 
@@ -302,18 +312,19 @@ onMounted(() => {
   else if (currentPage.value === 'three') fetchRecords2()
   else fetchRecords()
 })
-
-watch([selectedDate3, selectedDate4, selectedItem, selectedItem2], () => {
-  if (currentPage.value === 'two') fetchRecords3()
-  else if (currentPage.value === 'three') fetchRecords2()
-  else fetchRecords()
-})
-
-watch(currentPage, (newPage) => {
-  if (newPage === 'two') fetchRecords3()
-  else if (newPage === 'three') fetchRecords2()
-  else fetchRecords()
-})
+watch(
+  [selectedDate, selectedDate2, selectedDate3, selectedDate4, selectedItem, selectedItem2, currentPage],
+  () => {
+    if (currentPage.value === 'two') {
+      fetchRecords3()
+    } else if (currentPage.value === 'three') {
+      fetchRecords2()
+    } else {
+      fetchRecords()
+    }
+  },
+  { immediate: true } // 讓監聽初始化就執行一次
+)
 
 
 
@@ -460,7 +471,7 @@ watch(currentPage, (newPage) => {
                       <button class="update-btn" style="padding: 6px 10px;" @click="confirmEdit">確認</button>
                     </template>
                     <template v-else>
-                        {{ record.date }}
+                      {{ record.date }}
                     </template>
                   </div>
                 </td>
@@ -474,27 +485,35 @@ watch(currentPage, (newPage) => {
     <div v-else-if="currentPage === 'two'">
       <div class="form-wrapper">
         <h5 class="title">庫存總覽</h5>
-        <div v-if="itemSummary.length > 0" style="font-size: 14px;">
-          <table class="table ">
-            <thead>
-              <tr>
-                <th>品項</th>
-                <th>數量</th>
-                <th>平均單價</th>
-                <th>總價</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(record, index) in itemSummary" :key="index">
-                <td>{{ record.item }}</td>
-                <td>{{ record.quantity }}</td>
-                <td>{{ record.avgPrice.toFixed(2) }}</td>
-                <td>{{ record.totalPrice.toFixed(2) }}</td>
-              </tr>
-            </tbody>
-          </table>
+
+        <div v-if="isLoading" style="font-size: 14px; color: #888;">
+          載入中...
         </div>
-        <div v-else>目前無資料</div>
+        <div v-else>
+          <div v-if="itemSummary.length > 0" style="font-size: 14px;">
+            <table class="table ">
+              <thead>
+                <tr>
+                  <th>品項</th>
+                  <th>數量</th>
+                  <th>平均單價</th>
+                  <th>總價</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(record, index) in itemSummary" :key="index">
+                  <td>{{ record.item }}</td>
+                  <td>{{ record.quantity }}</td>
+                  <td>{{ record.avgPrice.toFixed(2) }}</td>
+                  <td>{{ record.totalPrice.toFixed(2) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else style="font-size: 14px; color: #888;">
+            目前無資料
+          </div>
+        </div>
       </div>
     </div>
     <!-- 出庫 -->

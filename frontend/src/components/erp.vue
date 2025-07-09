@@ -4,11 +4,14 @@ import axios from 'axios'
 const currentPage = ref('one')
 const currentPage2 = ref('one-1')
 const currentPage3 = ref('one-1')
+const currentPage4 = ref('one-1')
 const today = new Date().toISOString().split('T')[0]
 const selectedDate = ref(today)
 const selectedDate2 = ref('')
 const selectedDate3 = ref(today)
 const selectedDate4 = ref('')
+const selectedDate5 = ref(today)
+const selectedDate6 = ref('')
 const recordList = ref([])
 const recordList2 = ref([])
 const editingId = ref(null)
@@ -18,7 +21,7 @@ const itemOptions = ['雞蛋', '砂糖', '低筋麵粉', '牛奶', '水',"泡打
 const isLoading = ref(false)
 
 const qty = ref(0)
-const cost = ref(20)
+
 // 初始就有 5 列可輸入
 const rows = ref([
   { item: '', quantity: '', price: '', note: '' },
@@ -347,7 +350,7 @@ watch(
     <div class="item p-3 text-center" :class="{ active: currentPage === 'one' }" @click="() => { currentPage = 'one'; currentPage2 = 'one-1' }">入庫</div>
     <div class="item p-3 text-center" :class="{ active: currentPage === 'two' }" @click="() => { currentPage = 'two' }">庫存</div>
     <div class="item p-3 text-center" :class="{ active: currentPage === 'three' }" @click="() => { currentPage = 'three'; currentPage3 = 'one-1' }">出庫</div>
-    <div class="item p-3 text-center" :class="{ active: currentPage === 'four' }" @click="() => { currentPage = 'four' }">報表</div>
+    <div class="item p-3 text-center" :class="{ active: currentPage === 'four' }" @click="() => { currentPage = 'four' ;currentPage4 = 'one-1'}">報表</div>
   </div>
 
 
@@ -579,7 +582,7 @@ watch(
           <button style="min-width: 330px;" class="btn mb-3" :class="{ active: currentPage3 === 'one-1' }"@click="currentPage3 = 'one-1'">新增出庫</button>
         </div>
         <div class="form-wrapper">
-          <h5 class="title">出庫庫總覽查詢</h5>
+          <h5 class="title">出庫總覽查詢</h5>
           <div class="d-flex justify-content-center mt-3">
             <div class="d-flex align-items-center gap-3" style="width: 100%; max-width: 330px;">
               <div style="font-size:14px; white-space: nowrap;">日期&ensp;:</div>
@@ -668,33 +671,53 @@ watch(
     </div>
     <!-- 報表 -->
     <div v-if="currentPage === 'four'">
-      <div class="form-wrapper">
-        <h5 class="title">淨利報表</h5>
-        <table class="text-center align-middle">
-          <thead>
-            <tr>
-              <th style="width: 20%;">品項</th>
-              <th style="width: 40%;">營業收入</th>
-              <th style="width: 40%;">銷貨成本</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="align-middle">雞蛋糕</td>
-              <td>
-                <div class="d-flex justify-content-center align-items-center ">
-                  <input v-model.number="qty" type="number" min="0" class="form-control text-center report" style="width: 80px; margin-right: 5px;" />
-                  <div style="white-space: nowrap;">份 × 50</div>
-                </div>
-              </td>
-              <td>
-                <div class="d-flex justify-content-center align-items-center ">
-                  
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div v-if="currentPage4 === 'one-1'">
+        <div class="d-flex justify-content-center align-items-center " >
+          <button style="min-width: 330px;" class="btn mb-3" :class="{ active: currentPage4 === 'two-2' }"@click="() => { currentPage4 = 'two-2'; }">報表總覽</button>
+        </div>
+        <div class="form-wrapper">
+          <h5 class="title">報表紀錄</h5>
+          <div class="d-flex justify-content-center mt-3">
+            <div class="d-flex align-items-center gap-3 mb-3" style="width: 100%; max-width: 330px;">
+              <div style="font-size:14px; white-space: nowrap;">日期&ensp;:</div>
+              <input type="date"v-model="selectedDate5"class="form-control"style="min-height: 42px;  min-width: 0; flex: 1;"/>
+            </div>
+          </div>
+          <table class="text-center align-middle">
+            <thead>
+              <tr>
+                <th style="width: 20%;">品項</th>
+                <th style="width: 40%;">營業收入</th>
+                <th style="width: 40%;">銷貨成本</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="align-middle">雞蛋糕</td>
+                <td>
+                  <div class="d-flex justify-content-center align-items-center ">
+                    <input v-model.number="qty" type="number" min="0" class="form-control text-center report" style="width: 80px; margin-right: 5px;" />
+                    <div style="white-space: nowrap;">份 × 50</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-center align-items-center ">
+                    
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div v-else-if="currentPage4 === 'two-2'">
+        <div class="d-flex justify-content-center align-items-center " >
+          <button style="min-width: 330px;" class="btn mb-3" :class="{ active: currentPage4 === 'one-1' }"@click="currentPage4 = 'one-1'">報表紀錄</button>
+        </div>
+        <div class="form-wrapper">
+          <h5 class="title">報表總覽查詢</h5>
+
+        </div>
       </div>
     </div>
   </div>

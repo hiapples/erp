@@ -463,7 +463,7 @@ watch(
                     <input type="number" v-model.number="record.price" min="0" />
                   </template>
                   <template v-else>
-                    {{ record.price }}
+                    {{ record.price.toFixed(2) }}
                   </template>
                 </td>
                 <td class="note">

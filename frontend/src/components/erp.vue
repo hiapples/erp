@@ -17,7 +17,8 @@ const selectedItem2 = ref('')
 const itemOptions = ['雞蛋', '砂糖', '低筋麵粉', '牛奶', '水',"泡打粉","奶油"]
 const isLoading = ref(false)
 
-
+const qty = ref(0)
+const cost = ref(20)
 // 初始就有 5 列可輸入
 const rows = ref([
   { item: '', quantity: '', price: '', note: '' },
@@ -267,33 +268,41 @@ const itemSummary = computed(() => {
   const summary = []
 
   for (const item of itemOptions) {
+    // 入庫資料
     const inRecords = recordList.value.filter(r => r.item === item)
     const inQty = inRecords.reduce((sum, r) => sum + Number(r.quantity), 0)
-    const inTotalPrice = inRecords.reduce((sum, r) => sum + Number(r.quantity) * Number(r.price), 0)
+    const inTotalPrice = inRecords.reduce(
+      (sum, r) => sum + Number(r.quantity) * Number(r.price),
+      0
+    )
 
-    const outQty = recordList2.value
-      .filter(r => r.item === item)
-      .reduce((sum, r) => sum + Number(r.quantity), 0)
+    // 出庫資料
+    const outRecords = recordList2.value.filter(r => r.item === item)
+    const outQty = outRecords.reduce((sum, r) => sum + Number(r.quantity), 0)
+    const outTotalPrice = outRecords.reduce(
+      (sum, r) => sum + Number(r.quantity) * Number(r.price),
+      0
+    )
 
+    // 剩餘庫存與庫存總價，保持浮點數原始精度
     const stockQty = inQty - outQty
+    const stockTotalPrice = inTotalPrice - outTotalPrice
 
-    let avgPrice = 0
-    if (inQty > 0 && stockQty > 0) {
-      avgPrice = Number((inTotalPrice / inQty).toFixed(2))
-    }
-
-    const stockTotalPrice = Number((stockQty * avgPrice).toFixed(2))
+    // 平均價格保留原始精度
+    const avgPrice = stockQty > 0 ? stockTotalPrice / stockQty : 0
 
     summary.push({
       item,
       quantity: stockQty,
-      avgPrice: stockQty > 0 ? avgPrice : 0,
-      totalPrice: stockQty > 0 ? stockTotalPrice : 0
+      avgPrice,       // 原始數字，不四捨
+      totalPrice: stockTotalPrice  // 原始數字，不四捨
     })
   }
 
   return summary
 })
+
+
 
 
 
@@ -504,8 +513,8 @@ watch(
                 <tr v-for="(record, index) in itemSummary" :key="index">
                   <td>{{ record.item }}</td>
                   <td>{{ record.quantity }}</td>
-                  <td>{{ record.avgPrice.toFixed(2) }}</td>
-                  <td>{{ record.totalPrice.toFixed(2) }}</td>
+                  <td>{{ record.avgPrice.toFixed(2)}}</td>
+                  <td>{{ Math.round(record.totalPrice) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -553,7 +562,7 @@ watch(
                 <td><input type="number" class="qty" v-model.number="row.quantity" min="1" /></td>
                 <td>
                   <div class="price-text">
-                    {{ getAvgPrice(row.item) }}
+                    {{ getAvgPrice(row.item).toFixed(2) }}
                   </div>
                 </td>
                 <td><input class="note" v-model="row.note" /></td>
@@ -630,7 +639,7 @@ watch(
                     <input type="number" v-model.number="record.price" min="0" />
                   </template>
                   <template v-else>
-                    {{ record.price }}
+                    {{ record.price.toFixed(2) }}
                   </template>
                 </td>
                 <td class="note">
@@ -658,7 +667,33 @@ watch(
       </div>
     </div>
     <!-- 報表 -->
-    <div v-else-if="currentPage === 'four'">報表 </div>
+    <div v-if="currentPage === 'four'">
+      <div class="form-wrapper">
+        <h5 class="title">淨利報表</h5>
+        <table class="text-center">
+          <thead>
+            <tr>
+              <th>品項</th>
+              <th>營業收入</th>
+              <th>銷貨成本</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>雞蛋糕</td>
+              <td>
+                <input  v-model.number="qty" type="number" min="0" class="form-control d-inline-block qty " />
+                × 50 = {{ qty * 50 }}
+              </td>
+              <td>
+                <input v-model.number="cost" type="number" min="0" class="form-control d-inline-block qty" />
+                × {{ qty }} = {{ qty * cost }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 

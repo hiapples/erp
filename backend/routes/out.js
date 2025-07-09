@@ -74,4 +74,25 @@ router.delete('/:id', async (req, res) => {
   }
 })
 
+// 取得當天出庫總金額
+router.get('/total-today', async (req, res) => {
+  try {
+    const today = new Date().toISOString().slice(0, 10)
+
+    const records = await Outmodel.find({ date: today })
+
+    // 計算當天總金額
+    const totalAmount = records.reduce((sum, item) => sum + ((item.qty || 0) * (item.price || 0)), 0)
+
+    res.json({
+      date: today,
+      totalAmount
+    })
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+
 export default router

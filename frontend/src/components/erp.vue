@@ -37,7 +37,7 @@ const rows2 = ref([
   { item: '', quantity: '', price: '', note: '' },
   { item: '', quantity: '', price: '', note: '' }
 ])
-
+const totalAmount = ref(null)
 function checkOutStock() {
   const outQtyMap = {}
 
@@ -209,7 +209,20 @@ const fetchRecords3 = async () => {
     isLoading.value = false
   }
 }
+const fetchTotalAmount = async () => {
+  try {
+    const response = await fetch('http://localhost:3000/out/total-today')
+    const result = await response.json()
 
+    if (response.ok) {
+      totalAmount.value = result.totalAmount
+    } else {
+      console.error('API錯誤:', result.message)
+    }
+  } catch (error) {
+    console.error('API請求失敗:', error)
+  }
+}
 
 
 
@@ -322,21 +335,26 @@ function clearRow2(index) {
 onMounted(() => {
   if (currentPage.value === 'two') fetchRecords3()
   else if (currentPage.value === 'three') fetchRecords2()
+  else if (currentPage.value === 'four') fetchTotalAmount()
   else fetchRecords()
 })
+
 watch(
-  [selectedDate, selectedDate2, selectedDate3, selectedDate4, selectedItem, selectedItem2, currentPage],
+  [selectedDate, selectedDate2, selectedDate3, selectedDate4,selectedDate5,selectedDate6, selectedItem, selectedItem2, currentPage],
   () => {
     if (currentPage.value === 'two') {
       fetchRecords3()
     } else if (currentPage.value === 'three') {
       fetchRecords2()
+    } else if (currentPage.value === 'four') {
+      fetchTotalAmount()
     } else {
       fetchRecords()
     }
   },
-  { immediate: true } // 讓監聽初始化就執行一次
+  { immediate: true }
 )
+
 
 
 
@@ -702,7 +720,7 @@ watch(
                 </td>
                 <td>
                   <div class="d-flex justify-content-center align-items-center ">
-                    
+                    {{ totalAmount }}
                   </div>
                 </td>
               </tr>

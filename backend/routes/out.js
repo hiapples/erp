@@ -74,25 +74,32 @@ router.delete('/:id', async (req, res) => {
   }
 })
 
-// 取得當天出庫總金額
-router.get('/total-today', async (req, res) => {
+
+// 取得指定日期的出庫成本總和
+const group1 = ['雞蛋', '砂糖', '低筋麵粉', '牛奶', '水', '泡打粉', '奶油'];
+const group2 = ['金桔', '冰糖', '檸檬汁'];
+router.get('/total/:date', async (req, res) => {
   try {
-    const today = new Date().toISOString().slice(0, 10)
+    const { date } = req.params;
+    const records = await Outmodel.find({ date });
 
-    const records = await Outmodel.find({ date: today })
+    let totalGroup1 = 0;
+    let totalGroup2 = 0;
 
-    // 計算當天總金額
-    const totalAmount = records.reduce((sum, item) => sum + ((item.qty || 0) * (item.price || 0)), 0)
+    for (const r of records) {
+      const amt = r.quantity * r.price;
+      if (group1.includes(r.item)) totalGroup1 += amt;
+      else if (group2.includes(r.item)) totalGroup2 += amt;
+    }
 
     res.json({
-      date: today,
-      totalAmount
-    })
-
+      date,
+      totalGroup1,
+      totalGroup2
+    });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message })
+    res.status(500).json({ success: false, message: err.message });
   }
-})
-
+});
 
 export default router

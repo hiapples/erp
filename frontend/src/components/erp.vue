@@ -17,10 +17,11 @@ const recordList2 = ref([])
 const editingId = ref(null)
 const selectedItem = ref('')
 const selectedItem2 = ref('')
-const itemOptions = ['雞蛋', '砂糖', '低筋麵粉', '牛奶', '水',"泡打粉","奶油"]
+const itemOptions = ['雞蛋', '砂糖', '低筋麵粉', '牛奶', '水',"泡打粉","奶油","金桔","冰糖","檸檬汁"]
 const isLoading = ref(false)
-const totalAmount = ref(null)
 const qty = ref(0)
+const totalGroup1 = ref(0);
+const totalGroup2 = ref(0);
 
 // 初始就有 5 列可輸入
 const rows = ref([
@@ -209,20 +210,32 @@ const fetchRecords3 = async () => {
     isLoading.value = false
   }
 }
+// 報表的成本抓取
 const fetchTotalAmount = async () => {
-  try {
-    const response = await fetch('http://localhost:3000/api/outrecords/total-today')
-    const result = await response.json()
-
-    if (response.ok) {
-      totalAmount.value = result.totalAmount
-    } else {
-      console.error('API錯誤:', result.message)
-    }
-  } catch (error) {
-    console.error('API請求失敗:', error)
+  if (!selectedDate5.value) {
+    totalGroup1.value = 0;
+    totalGroup2.value = 0;
+    return;
   }
-}
+  try {
+    const res = await fetch(
+      `http://localhost:3000/api/outrecords/total/${selectedDate5.value}`
+    );
+    if (!res.ok) {
+      console.error('API 回傳錯誤：', res.status, res.statusText);
+      totalGroup1.value = 0;
+      totalGroup2.value = 0;
+      return;
+    }
+    const result = await res.json();
+    totalGroup1.value = result.totalGroup1;
+    totalGroup2.value = result.totalGroup2;
+  } catch (error) {
+    console.error('API 請求失敗：', error);
+    totalGroup1.value = 0;
+    totalGroup2.value = 0;
+  }
+};
 
 
 
@@ -720,7 +733,21 @@ watch(
                 </td>
                 <td>
                   <div class="d-flex justify-content-center align-items-center ">
-                    {{ totalAmount }}
+                    {{ totalGroup1 }}
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="align-middle">金桔汁</td>
+                <td>
+                  <div class="d-flex justify-content-center align-items-center ">
+                    <input v-model.number="qty" type="number" min="0" class="form-control text-center report" style="width: 80px; margin-right: 5px;" />
+                    <div style="white-space: nowrap;">份 × 50</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-center align-items-center ">
+                    {{ totalGroup2 }}
                   </div>
                 </td>
               </tr>

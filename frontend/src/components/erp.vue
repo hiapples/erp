@@ -19,10 +19,26 @@ const selectedItem = ref('')
 const selectedItem2 = ref('')
 const itemOptions = ['雞蛋', '砂糖', '低筋麵粉', '牛奶', '水',"泡打粉","奶油","金桔","冰糖","檸檬汁"]
 const isLoading = ref(false)
-const qty = ref(0)
 const totalGroup1 = ref(0);
 const totalGroup2 = ref(0);
+const qtyCake = ref(0);
+const qtyJuice = ref(0);
+// 如果之後兩種品項單價不一樣，也可以拆成 ref
+const unitPriceCake = 50;
+const unitPriceJuice = 60;
+const revenueCake = computed(() => qtyCake.value * unitPriceCake);
+const revenueJuice = computed(() => qtyJuice.value * unitPriceJuice);
 
+// 固定支出與淨利
+const fixedExpense = ref(0);
+const extraExpense = ref(0);
+// 淨利：營業收入 – 總成本 – 固定支出 – 額外支出
+const netProfit = computed(() =>
+  (revenueCake.value + revenueJuice.value)
+  - (totalGroup1.value + totalGroup2.value)
+  - fixedExpense.value
+  - extraExpense.value
+);
 // 初始就有 5 列可輸入
 const rows = ref([
   { item: '', quantity: '', price: '', note: '' },
@@ -222,16 +238,16 @@ const fetchTotalAmount = async () => {
       `http://localhost:3000/api/outrecords/total/${selectedDate5.value}`
     );
     if (!res.ok) {
-      console.error('API 回傳錯誤：', res.status, res.statusText);
+      console.error('API 回傳錯誤：', res.status);
       totalGroup1.value = 0;
       totalGroup2.value = 0;
       return;
     }
-    const result = await res.json();
-    totalGroup1.value = result.totalGroup1;
-    totalGroup2.value = result.totalGroup2;
-  } catch (error) {
-    console.error('API 請求失敗：', error);
+    const { totalGroup1: g1, totalGroup2: g2 } = await res.json();
+    totalGroup1.value = g1;
+    totalGroup2.value = g2;
+  } catch (err) {
+    console.error('API 請求失敗：', err);
     totalGroup1.value = 0;
     totalGroup2.value = 0;
   }
@@ -717,42 +733,57 @@ watch(
           <table class="text-center align-middle">
             <thead>
               <tr>
-                <th style="width: 20%;">品項</th>
-                <th style="width: 40%;">營業收入</th>
-                <th style="width: 40%;">銷貨成本</th>
+                <th>品項</th>
+                <th>份數 × 單價</th>
+                <th>營業收入</th>
+                <th>銷貨成本</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class="align-middle">雞蛋糕</td>
-                <td>
-                  <div class="d-flex justify-content-center align-items-center ">
-                    <input v-model.number="qty" type="number" min="0" class="form-control text-center report" style="width: 80px; margin-right: 5px;" />
-                    <div style="white-space: nowrap;">份 × 50</div>
-                  </div>
+                <td>雞蛋糕</td>
+                <td class="d-flex justify-content-center align-items-center gap-2">
+                  <input v-model.number="qtyCake" type="number" min="0" class="form-control text-center report" style="display: inline-block;" />
+                  <span>× {{ unitPriceCake }}</span>
                 </td>
-                <td>
-                  <div class="d-flex justify-content-center align-items-center ">
-                    {{ totalGroup1 }}
-                  </div>
+                <td>{{ revenueCake }}</td>
+                <td>{{ totalGroup1.toFixed(2) }}</td>
+              </tr>
+              <tr >
+                <td>金桔汁</td>
+                <td class="d-flex justify-content-center align-items-center gap-2">
+                  <input v-model.number="qtyJuice" type="number" min="0" class="form-control text-center report" style="display: inline-block;" />
+                  <span>× {{ unitPriceJuice }}</span>
                 </td>
+                <td>{{ revenueJuice }}</td>
+                <td>{{ totalGroup2.toFixed(2) }}</td>
               </tr>
               <tr>
-                <td class="align-middle">金桔汁</td>
-                <td>
-                  <div class="d-flex justify-content-center align-items-center ">
-                    <input v-model.number="qty" type="number" min="0" class="form-control text-center report" style="width: 80px; margin-right: 5px;" />
-                    <div style="white-space: nowrap;">份 × 50</div>
-                  </div>
-                </td>
-                <td>
-                  <div class="d-flex justify-content-center align-items-center ">
-                    {{ totalGroup2 }}
-                  </div>
-                </td>
+                <td>&ensp;</td>
+                <td>&ensp;</td>
+                <td>&ensp;</td>
+                <td>&ensp;</td>
+              </tr>
+              <tr class="total-row">
+                <td>總計</td>
+                <td ></td>
+                <td>{{ (revenueCake + revenueJuice).toFixed(0) }}</td>
+                <td>{{ (totalGroup1 + totalGroup2).toFixed(2) }}</td>
               </tr>
             </tbody>
           </table>
+          <div class="d-flex justify-content-center align-items-center gap-3 mt-3">
+            <label>固定支出：</label>
+            <input  v-model.number="fixedExpense" type="number" min="0" class="form-control text-center report2" />
+          </div>
+          <div class="d-flex justify-content-center align-items-center gap-3 mt-2">
+            <label>額外支出：</label>
+            <input v-model.number="extraExpense" type="number" min="0" class="form-control text-center report2" />
+          </div>
+          <div class="d-flex justify-content-center align-items-center gap-3 mt-2">
+            <div class="fw-bold">淨利：</div>
+            <div >{{ netProfit.toFixed(2) }}</div>
+          </div>
         </div>
       </div>
       <div v-else-if="currentPage4 === 'two-2'">
@@ -916,4 +947,35 @@ input[type=number]::-webkit-inner-spin-button {
 .report{
   max-width: 50px;
 }
+.report2{
+  max-width: 100px;
+}
+.total-row > td {
+  position: relative;
+  padding-top: 16px;    /* 線與文字間距 */
+}
+
+/* 各 td 頂端都畫滿寬度的線 */
+.total-row > td::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #666;
+}
+
+/* 最左邊那格只縮頭 (線往右推一點) */
+.total-row > td:first-child::before {
+  left: 20%;      /* 右推 20% */
+  width: 100%;    /* 寬度不變，等於左右都縮 20% */
+}
+
+/* 最右邊那格只縮尾 (線縮短一點) */
+.total-row > td:last-child::before {
+  width: 80%;     /* 寬度 80%，自動在右邊留 20% */
+}
+
+
 </style>

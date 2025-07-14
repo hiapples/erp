@@ -19,7 +19,7 @@ const selectedItem = ref('')
 const selectedItem2 = ref('')
 const itemOptions = ['雞蛋', '砂糖', '低筋麵粉', '牛奶', '水',"泡打粉","奶油"]
 const isLoading = ref(false)
-
+const totalAmount = ref(null)
 const qty = ref(0)
 
 // 初始就有 5 列可輸入
@@ -37,7 +37,7 @@ const rows2 = ref([
   { item: '', quantity: '', price: '', note: '' },
   { item: '', quantity: '', price: '', note: '' }
 ])
-const totalAmount = ref(null)
+
 function checkOutStock() {
   const outQtyMap = {}
 
@@ -211,7 +211,7 @@ const fetchRecords3 = async () => {
 }
 const fetchTotalAmount = async () => {
   try {
-    const response = await fetch('http://localhost:3000/out/total-today')
+    const response = await fetch('http://localhost:3000/api/outrecords/total-today')
     const result = await response.json()
 
     if (response.ok) {
